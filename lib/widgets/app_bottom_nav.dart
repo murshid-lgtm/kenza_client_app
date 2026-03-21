@@ -16,43 +16,81 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = <BottomNavigationBarItem>[
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.home_outlined),
-        activeIcon: Icon(Icons.home),
+      _item(
+        index: 0,
         label: 'Home',
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home,
       ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.work_outline),
-        activeIcon: Icon(Icons.work),
+      _item(
+        index: 1,
         label: 'Requests',
+        icon: Icons.work_outline,
+        activeIcon: Icons.work,
       ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.search),
-        activeIcon: Icon(Icons.search),
+      _item(
+        index: 2,
         label: 'Track',
+        icon: Icons.search,
+        activeIcon: Icons.search,
       ),
       if (showCompanies)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.inventory_2_outlined),
-          activeIcon: Icon(Icons.inventory_2),
+        _item(
+          index: 3,
           label: 'Companies',
+          icon: Icons.inventory_2_outlined,
+          activeIcon: Icons.inventory_2,
         ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.person_outline),
-        activeIcon: Icon(Icons.person),
+      _item(
+        index: showCompanies ? 4 : 3,
         label: 'Profile',
+        icon: Icons.person_outline,
+        activeIcon: Icons.person,
       ),
     ];
 
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: AppColors.bg,
-      selectedItemColor: AppColors.text,
-      unselectedItemColor: AppColors.text,
-      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-      items: items,
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.bg,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppColors.bg,
+        elevation: 0,
+        selectedItemColor: AppColors.text,
+        unselectedItemColor: AppColors.text,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+        ),
+        items: items,
+      ),
+    );
+  }
+
+  BottomNavigationBarItem _item({
+    required int index,
+    required String label,
+    required IconData icon,
+    required IconData activeIcon,
+  }) {
+    return BottomNavigationBarItem(
+      icon: Icon(icon),
+      activeIcon: Icon(activeIcon),
+      label: label,
     );
   }
 }
