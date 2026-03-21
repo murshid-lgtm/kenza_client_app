@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'profile_screen.dart';
 import 'requests_screen.dart';
 import 'track_screen.dart';
 
@@ -17,6 +18,7 @@ class _GuestHomeScreenState extends State<GuestHomeScreen> {
     const _GuestEmptyScreen(),
     const RequestsScreen(),
     const TrackScreen(),
+    const ProfileScreen(),
   ];
 
   @override

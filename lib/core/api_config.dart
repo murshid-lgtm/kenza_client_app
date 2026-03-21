@@ -1,7 +1,6 @@
 class ApiConfig {
   static const String baseUrl = 'https://trial.mellodeals.com/wp-json/kst/v5';
 
-  // Keep empty for now if Production Hardening token is OFF
   static const String appToken = '';
 
   static Map<String, String> headers() {

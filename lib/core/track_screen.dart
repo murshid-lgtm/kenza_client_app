@@ -19,6 +19,8 @@ class _TrackScreenState extends State<TrackScreen> {
   Future<void> searchTracking() async {
     final trackingId = trackingController.text.trim();
 
+    FocusScope.of(context).unfocus();
+
     if (trackingId.isEmpty) {
       setState(() {
         errorMessage = 'Please enter a tracking ID';
@@ -33,13 +35,20 @@ class _TrackScreenState extends State<TrackScreen> {
       result = null;
     });
 
+    print('SEARCH BUTTON CLICKED');
+    print('TRACKING ID: $trackingId');
+
     try {
       final data = await ApiService.guestTrack(trackingId);
+
+      print('API RESULT: $data');
 
       setState(() {
         result = data['data'] ?? data;
       });
     } catch (e) {
+      print('API ERROR: $e');
+
       setState(() {
         errorMessage = e.toString().replaceFirst('Exception: ', '');
       });
@@ -106,13 +115,11 @@ class _TrackScreenState extends State<TrackScreen> {
             children: [
               TextField(
                 controller: trackingController,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => searchTracking(),
                 decoration: InputDecoration(
                   hintText: 'Enter tracking ID',
                   prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    onPressed: isLoading ? null : searchTracking,
-                    icon: const Icon(Icons.arrow_forward),
-                  ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: const BorderSide(color: AppColors.border),
@@ -124,64 +131,68 @@ class _TrackScreenState extends State<TrackScreen> {
                   filled: true,
                   fillColor: Colors.white,
                 ),
-                onSubmitted: (_) => searchTracking(),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : searchTracking,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Search'),
+                ),
               ),
               const SizedBox(height: 20),
               Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : errorMessage != null
-                        ? Center(
-                            child: Text(
-                              errorMessage!,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.w600,
-                              ),
+                child: errorMessage != null
+                    ? Center(
+                        child: Text(
+                          errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : result != null
+                        ? SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                infoCard('Tracking ID', '${result!['tracking_id'] ?? '-'}'),
+                                infoCard('Status', '${result!['status'] ?? '-'}'),
+                                infoCard('Owner Mode', '${result!['owner_mode'] ?? '-'}'),
+                                infoCard('Customer Name', '${result!['customer_name'] ?? '-'}'),
+                                infoCard('Email', '${result!['customer_email_masked'] ?? '-'}'),
+                                infoCard('Company ID', '${result!['company_id'] ?? '-'}'),
+                              ],
                             ),
                           )
-                        : result != null
-                            ? SingleChildScrollView(
-                                child: Column(
-                                  children: [
-                                    infoCard(
-                                      'Tracking ID',
-                                      '${result!['tracking_id'] ?? '-'}',
-                                    ),
-                                    infoCard(
-                                      'Status',
-                                      '${result!['status'] ?? '-'}',
-                                    ),
-                                    infoCard(
-                                      'Owner Mode',
-                                      '${result!['owner_mode'] ?? '-'}',
-                                    ),
-                                    infoCard(
-                                      'Customer Name',
-                                      '${result!['customer_name'] ?? '-'}',
-                                    ),
-                                    infoCard(
-                                      'Email',
-                                      '${result!['customer_email_masked'] ?? '-'}',
-                                    ),
-                                    infoCard(
-                                      'Company ID',
-                                      '${result!['company_id'] ?? '-'}',
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : const Center(
-                                child: Text(
-                                  'Search a tracking ID to see request status',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: AppColors.muted,
-                                    fontSize: 16,
-                                  ),
-                                ),
+                        : const Center(
+                            child: Text(
+                              'Enter a tracking ID and tap Search',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 16,
                               ),
+                            ),
+                          ),
               ),
             ],
           ),

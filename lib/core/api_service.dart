@@ -8,10 +8,15 @@ class ApiService {
       '${ApiConfig.baseUrl}/guest-track?tracking_id=$trackingId',
     );
 
+    debugPrintUrl(uri.toString());
+
     final response = await http.get(
       uri,
       headers: ApiConfig.headers(),
     );
+
+    debugPrintStatus(response.statusCode);
+    debugPrintBody(response.body);
 
     final data = jsonDecode(response.body);
 
@@ -37,5 +42,20 @@ class ApiService {
     } else {
       throw Exception(data['message'] ?? 'Failed to load app settings');
     }
+  }
+
+  static void debugPrintUrl(String value) {
+    // ignore: avoid_print
+    print('API URL: $value');
+  }
+
+  static void debugPrintStatus(int value) {
+    // ignore: avoid_print
+    print('API STATUS: $value');
+  }
+
+  static void debugPrintBody(String value) {
+    // ignore: avoid_print
+    print('API BODY: $value');
   }
 }
