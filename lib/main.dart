@@ -1,0 +1,29 @@
+import 'package:flutter/material.dart';
+import 'core/app_colors.dart';
+import 'screens/login_screen.dart';
+
+void main() {
+  runApp(const KenzaClientApp());
+}
+
+class KenzaClientApp extends StatelessWidget {
+  const KenzaClientApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Kenza Client App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: AppColors.bg,
+        fontFamily: 'Arial',
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.light,
+        ),
+      ),
+      home: const LoginScreen(),
+    );
+  }
+}
