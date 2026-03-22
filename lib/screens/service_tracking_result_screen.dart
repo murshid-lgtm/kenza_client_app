@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/app_colors.dart';
 
@@ -43,65 +44,94 @@ class _ServiceTrackingResultScreenState
     return Icons.info_rounded;
   }
 
+  void _showActionMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _copyTrackingId(String trackingId) async {
+    await Clipboard.setData(ClipboardData(text: trackingId));
+    _showActionMessage('Tracking ID copied');
+  }
+
   Future<void> _openPhone(String phone) async {
     final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
-    if (clean.isEmpty || clean == '-') return;
+    if (clean.isEmpty || clean == '-') {
+      _showActionMessage('Phone number not available');
+      return;
+    }
 
-    final uri = Uri.parse('tel:$clean');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    final uri = Uri(scheme: 'tel', path: clean);
+
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        _showActionMessage('Could not open phone dialer');
+      }
+    } catch (_) {
+      _showActionMessage('Could not open phone dialer');
     }
   }
 
   Future<void> _openWhatsApp(String phone) async {
     final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    if (clean.isEmpty || clean == '-') return;
+    if (clean.isEmpty || clean == '-') {
+      _showActionMessage('WhatsApp number not available');
+      return;
+    }
 
-    final uri = Uri.parse('https://wa.me/$clean');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final waUri = Uri.parse('https://wa.me/$clean');
+
+    try {
+      final ok = await launchUrl(waUri, mode: LaunchMode.externalApplication);
+      if (!ok) {
+        _showActionMessage('Could not open WhatsApp');
+      }
+    } catch (_) {
+      _showActionMessage('Could not open WhatsApp');
     }
   }
 
-  Widget _compactMeta({
+  Widget _metaGridItem({
     required IconData icon,
     required String label,
     required String value,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF7A8594)),
-          const SizedBox(width: 8),
+          Icon(icon, size: 18, color: const Color(0xFF7A8594)),
+          const SizedBox(width: 10),
           Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  color: AppColors.text,
-                  fontSize: 13,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                children: [
-                  TextSpan(
-                    text: '$label: ',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w500,
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
-                  TextSpan(
-                    text: value,
-                    style: const TextStyle(
-                      color: AppColors.text,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -289,7 +319,7 @@ class _ServiceTrackingResultScreenState
               minHeight: 10,
               backgroundColor: const Color(0xFFE7EBF0),
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFF0B1C44)),
+                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
             ),
           ),
           if (isExpanded) ...[
@@ -339,8 +369,8 @@ class _ServiceTrackingResultScreenState
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [
-                Color(0xFF0E214E),
-                Color(0xFF1A3B86),
+                Color(0xFF241200),
+                Color(0xFF5A3513),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -370,20 +400,35 @@ class _ServiceTrackingResultScreenState
                 spacing: 10,
                 runSpacing: 10,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(.14),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Tracking ID: $trackingId',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                  InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () => _copyTrackingId(trackingId),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.14),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Tracking ID: $trackingId',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.copy_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -410,7 +455,7 @@ class _ServiceTrackingResultScreenState
               const Text(
                 'Overall progress',
                 style: TextStyle(
-                  color: Color(0xFFCFD8F0),
+                  color: Color(0xFFF2DCC8),
                   fontSize: 13,
                 ),
               ),
@@ -449,7 +494,7 @@ class _ServiceTrackingResultScreenState
             _actionButton(
               icon: Icons.support_agent_rounded,
               label: brandLabel,
-              background: const Color(0xFF0B1C44),
+              background: AppColors.primary,
               textColor: Colors.white,
               onTap: () => _openWhatsApp(whatsappNumber),
             ),
@@ -474,28 +519,64 @@ class _ServiceTrackingResultScreenState
           ],
         ),
         const SizedBox(height: 16),
-        _compactMeta(
-          icon: Icons.phone_android_rounded,
-          label: 'Mobile',
-          value: mobile,
-        ),
-        const SizedBox(height: 10),
-        _compactMeta(
-          icon: Icons.location_on_outlined,
-          label: 'Branch',
-          value: branch,
-        ),
-        const SizedBox(height: 10),
-        _compactMeta(
-          icon: Icons.calendar_today_outlined,
-          label: 'Submission',
-          value: submissionDate,
-        ),
-        const SizedBox(height: 10),
-        _compactMeta(
-          icon: Icons.event_available_outlined,
-          label: 'Appointment',
-          value: appointmentDate,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _metaGridItem(
+                      icon: Icons.phone_android_rounded,
+                      label: 'Mobile',
+                      value: mobile,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _metaGridItem(
+                      icon: Icons.location_on_outlined,
+                      label: 'Branch',
+                      value: branch,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _metaGridItem(
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Submission',
+                      value: submissionDate,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _metaGridItem(
+                      icon: Icons.event_available_outlined,
+                      label: 'Appointment',
+                      value: appointmentDate,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         if (notes.trim().isNotEmpty && notes.trim() != '-') ...[
           const SizedBox(height: 18),
