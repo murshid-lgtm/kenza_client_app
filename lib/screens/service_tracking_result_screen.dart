@@ -1,13 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/app_colors.dart';
 
-class ServiceTrackingResultScreen extends StatelessWidget {
+class ServiceTrackingResultScreen extends StatefulWidget {
   final Map<String, dynamic> data;
 
   const ServiceTrackingResultScreen({
     super.key,
     required this.data,
   });
+
+  @override
+  State<ServiceTrackingResultScreen> createState() =>
+      _ServiceTrackingResultScreenState();
+}
+
+class _ServiceTrackingResultScreenState
+    extends State<ServiceTrackingResultScreen> {
+  final Map<int, bool> expandedGroups = {};
 
   Color _statusBg(String status) {
     final s = status.toLowerCase();
@@ -33,41 +43,68 @@ class ServiceTrackingResultScreen extends StatelessWidget {
     return Icons.info_rounded;
   }
 
-  Widget _metaCard({
+  Future<void> _openPhone(String phone) async {
+    final clean = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (clean.isEmpty || clean == '-') return;
+
+    final uri = Uri.parse('tel:$clean');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _openWhatsApp(String phone) async {
+    final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.isEmpty || clean == '-') return;
+
+    final uri = Uri.parse('https://wa.me/$clean');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Widget _compactMeta({
     required IconData icon,
     required String label,
     required String value,
   }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FB),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 18, color: const Color(0xFF7A8594)),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.muted,
-                fontSize: 12,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF7A8594)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(
+                  color: AppColors.text,
+                  fontSize: 13,
+                ),
+                children: [
+                  TextSpan(
+                    text: '$label: ',
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  TextSpan(
+                    text: value,
+                    style: const TextStyle(
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: const TextStyle(
-                color: AppColors.text,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -96,12 +133,15 @@ class ServiceTrackingResultScreen extends StatelessWidget {
             children: [
               Icon(icon, color: textColor, size: 18),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -117,17 +157,17 @@ class ServiceTrackingResultScreen extends StatelessWidget {
     bool isLast = false,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: _statusBg(stageStatus),
               borderRadius: BorderRadius.circular(12),
@@ -135,7 +175,7 @@ class ServiceTrackingResultScreen extends StatelessWidget {
             child: Icon(
               _statusIcon(stageStatus),
               color: _statusText(stageStatus),
-              size: 20,
+              size: 18,
             ),
           ),
           const SizedBox(width: 12),
@@ -171,13 +211,16 @@ class ServiceTrackingResultScreen extends StatelessWidget {
   }
 
   Widget _groupCard({
+    required int index,
     required String title,
     required int progressPercent,
     required List<dynamic> stages,
   }) {
+    final isExpanded = expandedGroups[index] ?? true;
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 18),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -192,36 +235,51 @@ class ServiceTrackingResultScreen extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.text,
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              setState(() {
+                expandedGroups[index] = !isExpanded;
+              });
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF2F4F7),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  '$progressPercent%',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.text,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F4F7),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    '$progressPercent%',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Icon(
+                  isExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.text,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           ClipRRect(
@@ -230,18 +288,21 @@ class ServiceTrackingResultScreen extends StatelessWidget {
               value: (progressPercent.clamp(0, 100)) / 100,
               minHeight: 10,
               backgroundColor: const Color(0xFFE7EBF0),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0B1C44)),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF0B1C44)),
             ),
           ),
-          const SizedBox(height: 18),
-          ...List.generate(stages.length, (index) {
-            final stage = stages[index];
-            return _stageRow(
-              stageName: '${stage['name'] ?? '-'}',
-              stageStatus: '${stage['status'] ?? '-'}',
-              isLast: index == stages.length - 1,
-            );
-          }),
+          if (isExpanded) ...[
+            const SizedBox(height: 18),
+            ...List.generate(stages.length, (stageIndex) {
+              final stage = stages[stageIndex];
+              return _stageRow(
+                stageName: '${stage['name'] ?? '-'}',
+                stageStatus: '${stage['status'] ?? '-'}',
+                isLast: stageIndex == stages.length - 1,
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -249,6 +310,8 @@ class ServiceTrackingResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final data = widget.data;
+
     final trackingId = '${data['tracking_id'] ?? '-'}';
     final customerName = '${data['customer_name'] ?? '-'}';
     final status = '${data['status'] ?? '-'}';
@@ -361,7 +424,8 @@ class ServiceTrackingResultScreen extends StatelessWidget {
                         value: (progress.clamp(0, 100)) / 100,
                         minHeight: 11,
                         backgroundColor: Colors.white24,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                   ),
@@ -387,6 +451,7 @@ class ServiceTrackingResultScreen extends StatelessWidget {
               label: brandLabel,
               background: const Color(0xFF0B1C44),
               textColor: Colors.white,
+              onTap: () => _openWhatsApp(whatsappNumber),
             ),
             const SizedBox(width: 10),
             _actionButton(
@@ -395,6 +460,7 @@ class ServiceTrackingResultScreen extends StatelessWidget {
               background: Colors.white,
               textColor: AppColors.text,
               borderColor: AppColors.border,
+              onTap: () => _openPhone(supportPhone),
             ),
             const SizedBox(width: 10),
             _actionButton(
@@ -403,40 +469,33 @@ class ServiceTrackingResultScreen extends StatelessWidget {
               background: Colors.white,
               textColor: AppColors.text,
               borderColor: AppColors.border,
+              onTap: () => _openWhatsApp(whatsappNumber),
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            _metaCard(
-              icon: Icons.phone_android_rounded,
-              label: 'Mobile',
-              value: mobile,
-            ),
-            const SizedBox(width: 12),
-            _metaCard(
-              icon: Icons.location_on_outlined,
-              label: 'Branch',
-              value: branch,
-            ),
-          ],
+        const SizedBox(height: 16),
+        _compactMeta(
+          icon: Icons.phone_android_rounded,
+          label: 'Mobile',
+          value: mobile,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _metaCard(
-              icon: Icons.calendar_today_outlined,
-              label: 'Submission',
-              value: submissionDate,
-            ),
-            const SizedBox(width: 12),
-            _metaCard(
-              icon: Icons.event_available_outlined,
-              label: 'Appointment',
-              value: appointmentDate,
-            ),
-          ],
+        const SizedBox(height: 10),
+        _compactMeta(
+          icon: Icons.location_on_outlined,
+          label: 'Branch',
+          value: branch,
+        ),
+        const SizedBox(height: 10),
+        _compactMeta(
+          icon: Icons.calendar_today_outlined,
+          label: 'Submission',
+          value: submissionDate,
+        ),
+        const SizedBox(height: 10),
+        _compactMeta(
+          icon: Icons.event_available_outlined,
+          label: 'Appointment',
+          value: appointmentDate,
         ),
         if (notes.trim().isNotEmpty && notes.trim() != '-') ...[
           const SizedBox(height: 18),
@@ -473,7 +532,7 @@ class ServiceTrackingResultScreen extends StatelessWidget {
         ],
         const SizedBox(height: 22),
         const Text(
-          'Document Groups',
+          'Documents',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
@@ -481,8 +540,10 @@ class ServiceTrackingResultScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        ...groups.map((group) {
+        ...List.generate(groups.length, (index) {
+          final group = groups[index];
           return _groupCard(
+            index: index,
             title: '${group['title'] ?? 'Document'}',
             progressPercent: (group['progress_percent'] ?? 0) is int
                 ? group['progress_percent'] as int
@@ -490,38 +551,6 @@ class ServiceTrackingResultScreen extends StatelessWidget {
             stages: (group['stages'] as List?) ?? [],
           );
         }),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8F9FB),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Support Info',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.text,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'WhatsApp: $whatsappNumber',
-                style: const TextStyle(color: AppColors.text),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Phone: $supportPhone',
-                style: const TextStyle(color: AppColors.text),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
