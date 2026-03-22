@@ -12,26 +12,44 @@ class ServiceTrackingResultScreen extends StatelessWidget {
   Color _statusBg(String status) {
     final s = status.toLowerCase();
     if (s.contains('complete')) return const Color(0xFFE8FAEE);
-    if (s.contains('progress')) return const Color(0xFFE7F0FF);
-    if (s.contains('pending')) return const Color(0xFFFFF5E6);
+    if (s.contains('progress')) return const Color(0xFFEAF2FF);
+    if (s.contains('pending')) return const Color(0xFFFFF4E5);
     return const Color(0xFFF2F4F7);
   }
 
   Color _statusText(String status) {
     final s = status.toLowerCase();
     if (s.contains('complete')) return const Color(0xFF1E8E5A);
-    if (s.contains('progress')) return const Color(0xFF356AE6);
+    if (s.contains('progress')) return const Color(0xFF2F6FED);
     if (s.contains('pending')) return const Color(0xFFC98512);
     return AppColors.text;
   }
 
-  Widget _metaItem(String label, String value) {
+  IconData _statusIcon(String status) {
+    final s = status.toLowerCase();
+    if (s.contains('complete')) return Icons.check_circle_rounded;
+    if (s.contains('progress')) return Icons.pending_actions_rounded;
+    if (s.contains('pending')) return Icons.schedule_rounded;
+    return Icons.info_rounded;
+  }
+
+  Widget _metaCard({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FB),
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Icon(icon, size: 18, color: const Color(0xFF7A8594)),
+            const SizedBox(height: 10),
             Text(
               label,
               style: const TextStyle(
@@ -45,7 +63,7 @@ class ServiceTrackingResultScreen extends StatelessWidget {
               style: const TextStyle(
                 color: AppColors.text,
                 fontWeight: FontWeight.w700,
-                fontSize: 15,
+                fontSize: 14,
               ),
             ),
           ],
@@ -59,8 +77,8 @@ class ServiceTrackingResultScreen extends StatelessWidget {
     required String label,
     required Color background,
     required Color textColor,
-    VoidCallback? onTap,
     Color borderColor = Colors.transparent,
+    VoidCallback? onTap,
   }) {
     return Expanded(
       child: InkWell(
@@ -76,13 +94,14 @@ class ServiceTrackingResultScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: textColor),
+              Icon(icon, color: textColor, size: 18),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -92,27 +111,47 @@ class ServiceTrackingResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _stageRow(String stageName, String stageStatus) {
+  Widget _stageRow({
+    required String stageName,
+    required String stageStatus,
+    bool isLast = false,
+  }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      margin: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _statusBg(stageStatus),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              _statusIcon(stageStatus),
+              color: _statusText(stageStatus),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               stageName,
               style: const TextStyle(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: AppColors.text,
+                fontSize: 15,
               ),
             ),
           ),
+          const SizedBox(width: 10),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
               color: _statusBg(stageStatus),
               borderRadius: BorderRadius.circular(20),
@@ -122,6 +161,7 @@ class ServiceTrackingResultScreen extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: _statusText(stageStatus),
+                fontSize: 12,
               ),
             ),
           ),
@@ -141,12 +181,12 @@ class ServiceTrackingResultScreen extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
             color: Color(0x08000000),
-            blurRadius: 14,
+            blurRadius: 16,
             offset: Offset(0, 6),
           ),
         ],
@@ -160,37 +200,46 @@ class ServiceTrackingResultScreen extends StatelessWidget {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 19,
                     fontWeight: FontWeight.w800,
                     color: AppColors.text,
                   ),
                 ),
               ),
-              Text(
-                '$progressPercent%',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.text,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF2F4F7),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  '$progressPercent%',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             child: LinearProgressIndicator(
               value: (progressPercent.clamp(0, 100)) / 100,
               minHeight: 10,
-              backgroundColor: const Color(0xFFE8EDF3),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF081B45)),
+              backgroundColor: const Color(0xFFE7EBF0),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0B1C44)),
             ),
           ),
           const SizedBox(height: 18),
-          ...stages.map((stage) {
+          ...List.generate(stages.length, (index) {
+            final stage = stages[index];
             return _stageRow(
-              '${stage['name'] ?? '-'}',
-              '${stage['status'] ?? '-'}',
+              stageName: '${stage['name'] ?? '-'}',
+              stageStatus: '${stage['status'] ?? '-'}',
+              isLast: index == stages.length - 1,
             );
           }),
         ],
@@ -208,25 +257,37 @@ class ServiceTrackingResultScreen extends StatelessWidget {
     final submissionDate = '${data['submission_date'] ?? '-'}';
     final appointmentDate = '${data['appointment_date'] ?? '-'}';
     final notes = '${data['notes'] ?? '-'}';
+    final supportPhone = '${data['support_phone'] ?? '-'}';
+    final whatsappNumber = '${data['whatsapp_number'] ?? '-'}';
+    final brandLabel = '${data['brand_label'] ?? 'Support'}';
+
     final progress = (data['overall_progress_percent'] ?? 0) is int
         ? data['overall_progress_percent'] as int
         : int.tryParse('${data['overall_progress_percent'] ?? 0}') ?? 0;
+
     final groups = (data['groups'] as List?) ?? [];
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.border),
+            gradient: const LinearGradient(
+              colors: [
+                Color(0xFF0E214E),
+                Color(0xFF1A3B86),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(28),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x08000000),
-                blurRadius: 16,
-                offset: Offset(0, 6),
+                color: Color(0x14000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
               ),
             ],
           ),
@@ -238,10 +299,10 @@ class ServiceTrackingResultScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.text,
+                  color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -252,14 +313,14 @@ class ServiceTrackingResultScreen extends StatelessWidget {
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF2F4F7),
-                      borderRadius: BorderRadius.circular(14),
+                      color: Colors.white.withOpacity(.14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       'Tracking ID: $trackingId',
                       style: const TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.text,
                       ),
                     ),
                   ),
@@ -269,38 +330,38 @@ class ServiceTrackingResultScreen extends StatelessWidget {
                       vertical: 7,
                     ),
                     decoration: BoxDecoration(
-                      color: _statusBg(status),
-                      borderRadius: BorderRadius.circular(14),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       status,
                       style: TextStyle(
-                        fontWeight: FontWeight.w700,
                         color: _statusText(status),
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               const Text(
                 'Overall progress',
                 style: TextStyle(
-                  color: AppColors.muted,
+                  color: Color(0xFFCFD8F0),
                   fontSize: 13,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       child: LinearProgressIndicator(
                         value: (progress.clamp(0, 100)) / 100,
-                        minHeight: 10,
-                        backgroundColor: const Color(0xFFE8EDF3),
-                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF081B45)),
+                        minHeight: 11,
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     ),
                   ),
@@ -308,75 +369,118 @@ class ServiceTrackingResultScreen extends StatelessWidget {
                   Text(
                     '$progress%',
                     style: const TextStyle(
+                      color: Colors.white,
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  _actionButton(
-                    icon: Icons.support_agent_rounded,
-                    label: 'Support',
-                    background: const Color(0xFF081B45),
-                    textColor: Colors.white,
-                  ),
-                  const SizedBox(width: 10),
-                  _actionButton(
-                    icon: Icons.call_outlined,
-                    label: 'Call',
-                    background: Colors.white,
-                    textColor: AppColors.text,
-                    borderColor: AppColors.border,
-                  ),
-                  const SizedBox(width: 10),
-                  _actionButton(
-                    icon: Icons.picture_as_pdf_outlined,
-                    label: 'PDF',
-                    background: Colors.white,
-                    textColor: AppColors.text,
-                    borderColor: AppColors.border,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  _metaItem('Mobile', mobile),
-                  _metaItem('Branch', branch),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  _metaItem('Submission', submissionDate),
-                  _metaItem('Appointment', appointmentDate),
-                ],
-              ),
-              if (notes.trim().isNotEmpty && notes.trim() != '-') ...[
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8F9FB),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    notes,
-                    style: const TextStyle(
-                      color: AppColors.text,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
         const SizedBox(height: 18),
+        Row(
+          children: [
+            _actionButton(
+              icon: Icons.support_agent_rounded,
+              label: brandLabel,
+              background: const Color(0xFF0B1C44),
+              textColor: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            _actionButton(
+              icon: Icons.call_outlined,
+              label: 'Call',
+              background: Colors.white,
+              textColor: AppColors.text,
+              borderColor: AppColors.border,
+            ),
+            const SizedBox(width: 10),
+            _actionButton(
+              icon: Icons.chat_bubble_outline_rounded,
+              label: 'Chat',
+              background: Colors.white,
+              textColor: AppColors.text,
+              borderColor: AppColors.border,
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            _metaCard(
+              icon: Icons.phone_android_rounded,
+              label: 'Mobile',
+              value: mobile,
+            ),
+            const SizedBox(width: 12),
+            _metaCard(
+              icon: Icons.location_on_outlined,
+              label: 'Branch',
+              value: branch,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _metaCard(
+              icon: Icons.calendar_today_outlined,
+              label: 'Submission',
+              value: submissionDate,
+            ),
+            const SizedBox(width: 12),
+            _metaCard(
+              icon: Icons.event_available_outlined,
+              label: 'Appointment',
+              value: appointmentDate,
+            ),
+          ],
+        ),
+        if (notes.trim().isNotEmpty && notes.trim() != '-') ...[
+          const SizedBox(height: 18),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Notes',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  notes,
+                  style: const TextStyle(
+                    color: AppColors.text,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 22),
+        const Text(
+          'Document Groups',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.text,
+          ),
+        ),
+        const SizedBox(height: 12),
         ...groups.map((group) {
           return _groupCard(
             title: '${group['title'] ?? 'Document'}',
@@ -386,6 +490,38 @@ class ServiceTrackingResultScreen extends StatelessWidget {
             stages: (group['stages'] as List?) ?? [],
           );
         }),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FB),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Support Info',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'WhatsApp: $whatsappNumber',
+                style: const TextStyle(color: AppColors.text),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Phone: $supportPhone',
+                style: const TextStyle(color: AppColors.text),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
