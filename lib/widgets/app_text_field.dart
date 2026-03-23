@@ -6,6 +6,10 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final Widget? suffixIcon;
   final TextEditingController? controller;
+  final TextInputType keyboardType;
+  final ValueChanged<String>? onChanged;
+  final bool enabled;
+  final int? maxLength;
 
   const AppTextField({
     super.key,
@@ -13,6 +17,10 @@ class AppTextField extends StatelessWidget {
     this.obscureText = false,
     this.suffixIcon,
     this.controller,
+    this.keyboardType = TextInputType.text,
+    this.onChanged,
+    this.enabled = true,
+    this.maxLength,
   });
 
   @override
@@ -20,7 +28,12 @@ class AppTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
+      enabled: enabled,
+      maxLength: maxLength,
       decoration: InputDecoration(
+        counterText: '',
         hintText: hint,
         hintStyle: const TextStyle(
           color: AppColors.muted,
@@ -40,6 +53,10 @@ class AppTextField extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
     );

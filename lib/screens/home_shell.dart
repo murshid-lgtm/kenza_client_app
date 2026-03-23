@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../core/auth_service.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'companies_screen.dart';
+import 'login_screen.dart';
 import 'profile_screen.dart';
 import 'requests_screen.dart';
 import 'track_screen.dart';
@@ -20,7 +23,16 @@ class _HomeShellState extends State<HomeShell> {
     const RequestsScreen(),
     const TrackScreen(),
     const CompaniesScreen(),
-    const ProfileScreen(),
+    ProfileScreen(
+      onLogout: () async {
+        await AuthService.instance.signOut();
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (_) => false,
+        );
+      },
+    ),
   ];
 
   @override
@@ -46,8 +58,6 @@ class _EmptyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SizedBox.expand(),
-    );
+    return const Scaffold(body: SizedBox.expand());
   }
 }

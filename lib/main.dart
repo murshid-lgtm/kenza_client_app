@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
-import 'core/app_colors.dart';
-import 'screens/login_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+import 'core/app_colors.dart';
+import 'core/auth_config.dart';
+import 'screens/app_bootstrap_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: AuthConfig.supabaseUrl,
+    anonKey: AuthConfig.supabaseAnonKey,
+  );
   runApp(const KenzaClientApp());
 }
 
@@ -23,7 +31,7 @@ class KenzaClientApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: const LoginScreen(),
+      home: const AppBootstrapScreen(),
     );
   }
 }
