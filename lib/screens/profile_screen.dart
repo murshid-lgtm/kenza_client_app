@@ -30,8 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfile() async {
     try {
       final user = _supabase.auth.currentUser;
+
       if (user == null) {
-        if (!mounted) return;
         setState(() => isLoading = false);
         return;
       }
@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .from('app_profiles')
           .select()
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
       if (!mounted) return;
 
@@ -49,7 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
       setState(() => isLoading = false);
     }
   }

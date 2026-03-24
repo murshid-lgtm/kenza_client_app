@@ -203,6 +203,40 @@ class AuthService {
     );
   }
 
+  Future<void> ensureProfile({
+    required String userId,
+    required String email,
+    String? fullName,
+    String? mobile,
+  }) async {
+    final supabase = Supabase.instance.client;
+
+    final existing = await supabase
+        .from('app_profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (existing == null) {
+      await supabase.from('app_profiles').insert({
+        'id': userId,
+        'email': email,
+        'full_name': fullName ?? '',
+        'mobile': mobile ?? '',
+        'role': 'customer',
+      });
+    }
+  }
+
+  final user = Supabase.instance.client.auth.currentUser;
+
+  if (user != null) {
+    await ensureProfile(
+      userId: user.id,
+      email: user.email ?? '',
+    );
+  }
+
   Future<void> completeGoogleSignInIfNeeded() async {
     final user = _client.auth.currentUser;
     if (user == null) return;
@@ -276,4 +310,5 @@ class AuthService {
       throw Exception(body.isNotEmpty ? body : 'WordPress sync failed');
     }
   }
+
 }
