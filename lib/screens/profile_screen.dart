@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/app_colors.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final Future<void> Function()? onLogout;
+
+  const ProfileScreen({super.key, this.onLogout});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -28,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null) {
+        if (!mounted) return;
         setState(() => isLoading = false);
         return;
       }
@@ -51,6 +55,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
+    if (widget.onLogout != null) {
+      await widget.onLogout!.call();
+      return;
+    }
+
     await _supabase.auth.signOut();
     await _storage.deleteAll();
 
@@ -103,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final email = _supabase.auth.currentUser?.email ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F0),
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
         title: const Text('Profile'),
         backgroundColor: Colors.transparent,
@@ -116,12 +125,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _infoTile('Name', profile?['full_name'] ?? '-'),
-                  _infoTile('Email', profile?['email'] ?? email),
-                  _infoTile('Mobile', profile?['mobile'] ?? '-'),
-                  _infoTile('Role', profile?['role'] ?? 'customer'),
+                  _infoTile('Name', profile?['full_name']?.toString() ?? '-'),
+                  _infoTile('Email', profile?['email']?.toString() ?? email),
+                  _infoTile('Mobile', profile?['mobile']?.toString() ?? '-'),
+                  _infoTile('Role', profile?['role']?.toString() ?? 'customer'),
                   if ((profile?['company_name'] ?? '').toString().trim().isNotEmpty)
-                    _infoTile('Company', profile?['company_name'] ?? ''),
+                    _infoTile('Company', profile?['company_name']?.toString() ?? ''),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,

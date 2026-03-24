@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/auth_service.dart';
+import 'home_shell.dart';
 import 'login_screen.dart';
+import 'pin_setup_screen.dart';
 import 'pin_unlock_screen.dart';
 
 class AppBootstrapScreen extends StatefulWidget {
@@ -20,20 +22,39 @@ class _AppBootstrapScreenState extends State<AppBootstrapScreen> {
 
   Future<void> _checkSession() async {
     await Future.delayed(const Duration(milliseconds: 400));
-
-    final session = Supabase.instance.client.auth.currentSession;
+    final state = await AuthService.instance.bootstrap();
 
     if (!mounted) return;
 
-    if (session != null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const PinUnlockScreen()),
-      );
-    } else {
+    if (!state.hasSession) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
+      return;
     }
+
+    if (state.requiresPinUnlock && state.email != null && state.email!.isNotEmpty) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => PinUnlockScreen(email: state.email!)),
+      );
+      return;
+    }
+
+    if (state.requiresPinSetup && state.email != null && state.email!.isNotEmpty) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => PinSetupScreen(
+            email: state.email!,
+            nextScreen: const HomeShell(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeShell()),
+    );
   }
 
   @override
