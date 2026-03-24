@@ -1,79 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../core/app_colors.dart';
-import '../core/auth_service.dart';
+import 'login_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  final VoidCallback? onLogout;
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
-  const ProfileScreen({super.key, this.onLogout});
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _supabase = Supabase.instance.client;
+  final _storage = const FlutterSecureStorage();
+
+  Map<String, dynamic>? profile;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final data = await _supabase
+          .from('app_profiles')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+      if (!mounted) return;
+
+      setState(() {
+        profile = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _logout() async {
+    await _supabase.auth.signOut();
+    await _storage.deleteAll();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  Widget _infoTile(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8DED2)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF221708),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: Color(0xFF221708),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<String?>>(
-      future: Future.wait([
-        AuthService.instance.rememberedName(),
-        AuthService.instance.rememberedEmail(),
-        AuthService.instance.rememberedMobile(),
-      ]),
-      builder: (context, snapshot) {
-        final name = snapshot.data?[0] ?? 'Profile';
-        final email = snapshot.data?[1] ?? '-';
-        final mobile = snapshot.data?[2] ?? '-';
-        return Scaffold(
-          backgroundColor: AppColors.bg,
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
+    final email = _supabase.auth.currentUser?.email ?? '';
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F5F0),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: const Color(0xFF221708),
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Profile', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 24),
-                  _infoCard('Name', name),
-                  const SizedBox(height: 14),
-                  _infoCard('Email', email),
-                  const SizedBox(height: 14),
-                  _infoCard('Mobile', mobile),
+                  _infoTile('Name', profile?['full_name'] ?? '-'),
+                  _infoTile('Email', profile?['email'] ?? email),
+                  _infoTile('Mobile', profile?['mobile'] ?? '-'),
+                  _infoTile('Role', profile?['role'] ?? 'customer'),
+                  if ((profile?['company_name'] ?? '').toString().trim().isNotEmpty)
+                    _infoTile('Company', profile?['company_name'] ?? ''),
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: onLogout,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.text),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: ElevatedButton(
+                      onPressed: _logout,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF221708),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
-                      child: const Text('Logout', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w700)),
+                      child: const Text('Logout'),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _infoCard(String label, String value) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(color: AppColors.muted)),
-          const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        ],
-      ),
     );
   }
 }

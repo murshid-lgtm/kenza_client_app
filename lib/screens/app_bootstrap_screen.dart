@@ -1,38 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/app_colors.dart';
-import '../core/auth_service.dart';
-import 'home_shell.dart';
 import 'login_screen.dart';
-import 'pin_setup_screen.dart';
 import 'pin_unlock_screen.dart';
 
-class AppBootstrapScreen extends StatelessWidget {
+class AppBootstrapScreen extends StatefulWidget {
   const AppBootstrapScreen({super.key});
 
   @override
+  State<AppBootstrapScreen> createState() => _AppBootstrapScreenState();
+}
+
+class _AppBootstrapScreenState extends State<AppBootstrapScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    await Future.delayed(const Duration(milliseconds: 400));
+
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (!mounted) return;
+
+    if (session != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const PinUnlockScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<BootstrapState>(
-      future: AuthService.instance.bootstrap(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(
-            backgroundColor: AppColors.bg,
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        final state = snapshot.data!;
-        if (!state.hasSession) return const LoginScreen();
-        if (state.requiresPinSetup) {
-          return PinSetupScreen(
-            email: state.email ?? '',
-            title: 'Set your 4-digit PIN',
-            subtitle: 'Use this PIN for faster future sign in.',
-            nextScreen: const HomeShell(),
-          );
-        }
-        return PinUnlockScreen(email: state.email ?? '');
-      },
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
